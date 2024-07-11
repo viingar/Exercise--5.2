@@ -1,6 +1,7 @@
 package com.example.personmicroservice.Controller;
 
 import com.example.personmicroservice.Model.Person;
+import com.example.personmicroservice.Model.Weather;
 import com.example.personmicroservice.Repository.PersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,9 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Optional;
 
-@Service
+
 @RestController
 @RequestMapping("/person")
 public class PersonController {
@@ -21,13 +23,23 @@ public class PersonController {
     @Autowired
     private RestTemplate restTemplate;
 
+    @GetMapping("{id}/weather")
+    public ResponseEntity<Weather> getWeather(@PathVariable int id) {
+        if (repository.existsById(id)) {
+            String location = repository.findById(id).get().getLocation();
+            Weather weather = restTemplate.getForObject("http://localhost:8072/weather?location=" + location, Weather.class);
+            return new ResponseEntity(weather, HttpStatus.OK);
+        }
+        return new ResponseEntity(null, HttpStatus.NOT_FOUND);
+    }
+
     @GetMapping
-    public Iterable<Person> findAll() {
-        return repository.findAll();
+    public List<Person> findAll() {
+        return (List<Person>) repository.findAll();
     }
 
     @GetMapping("/{id}")
-    public Optional<Person> findById(@PathVariable int id) {
+    public Optional<Person> findById(int id) {
         return repository.findById(id);
     }
 
@@ -37,4 +49,22 @@ public class PersonController {
                 ? new ResponseEntity(repository.findById(person.getId()), HttpStatus.BAD_REQUEST)
                 : new ResponseEntity(repository.save(person), HttpStatus.CREATED);
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Person> update(@PathVariable int id, @RequestBody Person person) {
+        if (!repository.existsById(id)) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        person.setId(id);
+        Person updatedPerson = repository.save(person);
+        return new ResponseEntity<>(updatedPerson, HttpStatus.OK);
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Person> delete(@PathVariable int id) {
+        if (!repository.existsById(id)) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        repository.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
 }
