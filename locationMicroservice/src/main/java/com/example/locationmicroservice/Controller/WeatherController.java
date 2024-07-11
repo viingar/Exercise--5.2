@@ -4,6 +4,7 @@ import com.example.locationmicroservice.Model.Geodata;
 import com.example.locationmicroservice.Model.Weather;
 import com.example.locationmicroservice.Repository.GeodataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,16 +19,23 @@ public class WeatherController {
     @Autowired
     private GeodataRepository repository;
     private RestTemplate restTemplate;
+    @Value("${weather.url}")
+    String weatherUrl;
     @GetMapping("/weather")
     public ResponseEntity<?> redirectRequestWeather(@RequestParam String location) {
         Optional<Geodata> optionalGeodata = repository.findByName(location);
-        if (optionalGeodata.isPresent()) {
-            Geodata geodata = optionalGeodata.get();
-            String url = String.format("http://localhost:8070/weather?lat=%s&lon=%s", geodata.getLat(), geodata.getLon());
+
+        if (!optionalGeodata.isPresent()) {
+            return new ResponseEntity<>("Location not found", HttpStatus.NOT_FOUND);
+        }
+
+        Geodata geodata = optionalGeodata.get();
+        String url = String.format("http://%s/?lat=%s&lon=%s", weatherUrl, geodata.getLat(), geodata.getLon());
+        try {
             Weather weather = restTemplate.getForObject(url, Weather.class);
             return new ResponseEntity<>(weather, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Location not found", HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error fetching weather data", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @GetMapping("/location")
