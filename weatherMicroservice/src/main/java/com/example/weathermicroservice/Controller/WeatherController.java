@@ -38,7 +38,7 @@ public class WeatherController {
         }
     }
     @Cacheable(value = "weather", key = "#lat.concat(':').concat(#lon)")
-    @GetMapping
+    @GetMapping("/weather")
     public Main getWeather(@RequestParam String lat, @RequestParam String lon) {
         String request = String.format("%s?lat=%s&lon=%s&units=metric&appid=%s",
                 urlWeather, lat, lon, appId);

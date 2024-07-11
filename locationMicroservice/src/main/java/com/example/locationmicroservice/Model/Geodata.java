@@ -6,15 +6,18 @@ import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Entity
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-public class Location {
+public class Geodata {
     @Id
     @GeneratedValue
-    private int id;
-    private String location;
-
+    int id;
+    @NonNull
+    private double lon;
+    @NonNull private double lat;
+    @NonNull private String name;
 }
